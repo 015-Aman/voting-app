@@ -1,0 +1,29 @@
+.home-container {
+  max-width: 1200px;
+  margin: 50px auto;
+  padding: 20px;
+  border-radius: 10px;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+.content {
+  flex: 1;
+  padding: 10px;
+}
+
+.image-container {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.image-container img {
+  max-width: 80%;
+  height: auto;
+  opacity: 0.9; /* Adjust the opacity as needed */
+}
