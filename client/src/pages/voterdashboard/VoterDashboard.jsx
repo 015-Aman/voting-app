@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import "./VoterDashboard.scss"; // Import your SCSS file for styling
 import newRequest from "../../utils/newRequest";
 import { useNavigate } from "react-router-dom";
+import {ethers} from 'ethers';
+import { contractAbi, contractAddress } from "../../../../server/constants/constant";
 
 function VoterDashboard() {
   const navigate = useNavigate();
@@ -16,6 +18,142 @@ function VoterDashboard() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [provider, setProvider] = useState(null);
+  const [account, setAccount] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [votingStatus, setVotingStatus] = useState(true);
+  const [remainingTime, setremainingTime] = useState('');
+  const [candidate, setCandidate] = useState([]);
+  const [number, setNumber] = useState('');
+  const [CanVote, setCanVote] = useState(true);
+ 
+  useEffect( () => {
+    getCandidate();
+    getRemainingTime();
+    getCurrentStatus();
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+    }
+
+    return() => {
+      if (window.ethereum) {
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      }
+    }
+  });
+
+  async function handleNumberChange(e) {
+    setNumber(e.target.value);
+  }
+
+  async function vote() {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = provider.getSigner();
+    const contractInstance = new ethers.Contract (
+      contractAddress, contractAbi, signer
+    );
+
+    const tx = await contractInstance.vote(number);
+    await tx.wait();
+    canVote();
+  }
+
+
+async function canVote() {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = provider.getSigner();
+    const contractInstance = new ethers.Contract (
+      contractAddress, contractAbi, signer
+    );
+    const voteStatus = await contractInstance.voters(await signer.getAddress());
+    setCanVote(voteStatus);
+
+}
+
+async function getCandidate() {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = provider.getSigner();
+    const contractInstance = new ethers.Contract (
+      contractAddress, contractAbi, signer
+    );
+    const candidateList = await contractInstance.getAllVotesOfCandiates();
+    // console.log(candidateList);
+    const formattedCandidates = candidateList.map((candidate, index) => {
+      return {
+        index: index,
+        name: candidate.name,
+        voteCount: candidate.voteCount.toNumber()
+      }
+    });
+    setCandidate(formattedCandidates);
+}
+
+
+  async function getCurrentStatus() {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = provider.getSigner();
+    const contractInstance = new ethers.Contract (
+      contractAddress, contractAbi, signer
+    );
+    const status = await contractInstance.getVotingStatus();
+    // console.log(status);
+    setVotingStatus(status);
+}
+
+async function getRemainingTime() {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = provider.getSigner();
+    const contractInstance = new ethers.Contract (
+      contractAddress, contractAbi, signer
+    );
+    const time = await contractInstance.getRemainingTime();
+    setremainingTime(parseInt(time, 16));
+}
+  function handleAccountsChanged(accounts) {
+    if (accounts.length > 0 && account !== accounts[0]) {
+      setAccount(accounts[0]);
+      canVote();
+    } else {
+      setIsConnected(false);
+      setLoggedIn(false);
+      setAccount(null);
+      console.log("Metamask Connected : " + address);
+    }
+  }
+
+  const connectWallet = async () => {
+    // Perform actions to connect the wallet (e.g., MetaMask)
+    // Once connected, update the loggedIn state to true
+
+    if(window.ethereum){
+      try{
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        setProvider(provider);
+        await provider.send("eth_requestAccounts", []);
+        const signer = provider.getSigner();
+        const address = await signer.getAddress();
+        setAccount(address);
+        console.log("Metamask Connected : " + address);
+
+        //yha check krna hai ye address aur loggedin user ka address same hai ya ni
+
+        setLoggedIn(true);
+        setIsConnected(true);
+        canVote();
+      } catch (err) {
+        console.log(err);
+      }
+    } else {
+      console.error("Metamask not detected in browser");
+    }
+  };
 
   const handleChangePassword = async () => {
     try {
@@ -55,7 +193,7 @@ function VoterDashboard() {
   
   const fetchCandidates = async () => {
     try {
-      const response = await newRequest.get("/candidates");
+      const response = await newRequest.get("voter/auth/candidates");
       const candidateData = response.data.candidates;
       const filteredCandidates = candidateData.filter(candidates => candidates.constituency === currentUser.constituency);
       
@@ -97,6 +235,7 @@ function VoterDashboard() {
     setViewVotingHistory(false);
     setViewVoterDetails(false);
     setViewCandidateDetails(false);
+    console.log(candidates);
     setCastVote(true);
     setShowChangePassword(false);
   };
@@ -193,10 +332,42 @@ function VoterDashboard() {
         </div>
       )}
 
-      {castVote && (
+      {loggedIn && castVote && (
         <div className="cast-vote">
           <h2>Cast Vote</h2>
+          <h3>Metamask Account: {account}</h3>
+          <h4>Remaining time to vote: {remainingTime} seconds</h4>
           {/* Display voter details here */}
+
+          { !canVote ? (
+            <p className="connected-account">You have already voted.</p>
+          ) : (
+          <div>
+            <input type="number" placeholder="Entern Candidate Index" value={number} onChange={handleNumberChange}></input>
+            <br />
+            <button className="login-button" onClick={vote}>Vote</button>
+          </div>
+          )}
+
+          <table id="myTable" className="candidates-table">
+                <thead>
+                <tr>
+                    <th>Index</th>
+                    <th>Candidate name</th>
+                    <th>Candidate votes</th>
+                </tr>
+                </thead>
+                <tbody>
+                {candidate.map((candidate, index) => (
+                    <tr key={index}>
+                    <td>{candidate.index}</td>
+                    <td>{candidate.name}</td>
+                    <td>{candidate.voteCount}</td>
+                    </tr>
+                ))}
+                </tbody>
+            </table>
+
           {candidates.map(candidate => (
             <div key={candidate._id} className="candidate-container">
               <div className="candidate-image">
@@ -211,9 +382,18 @@ function VoterDashboard() {
               </div>
             </div>
           ))}
-
         </div>
       )}
+
+      {!loggedIn && (
+        <div className="login-container">
+          <h1 className="welcome-message">Welcome to decentralized voting application</h1>
+          <div className="login">
+            <button className="login-button" onClick={connectWallet}>Login to MetaMask to vote</button>
+          </div>
+        </div>
+      )}
+
 
       {viewVotingHistory && (
         <div className="voting-history">

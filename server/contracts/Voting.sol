@@ -1,51 +1,66 @@
 // SPDX-License-Identifier: GPL-3.0
-
+pragma experimental ABIEncoderV2;
 pragma solidity >=0.4.22 <0.9.0;
+// pragma solidity ^0.8.0;
 
 contract Voting {
-
-    struct Voter {
-        bool voted;
-        uint weight;
-        uint vote;
-    }
-    struct Proposal {
-        bytes32 name;
-        uint voteCount;
+    struct Candidate {
+        string name;
+        uint256 voteCount;
     }
 
-    Proposal[] public proposals;
-    mapping(address => Voter) public voters;
-    address public chairperson;
+    Candidate[] public candidates;
+    address owner;
+    mapping(address => bool) public voters;
 
-    constructor(bytes32[] memory proposalNames) public {
-        chairperson = msg.sender;
-        voters[chairperson].weight = 1;
-        for(uint i = 0; i < proposalNames.length; i++) {
-            proposals.push(Proposal({
-                name: proposalNames[i],
+    uint256 public votingStart;
+    uint256 public votingEnd;
+
+constructor(string[] memory _candidateNames, uint256 _durationInMinutes) public {
+    for (uint256 i = 0; i < _candidateNames.length; i++) {
+        candidates.push(Candidate({
+            name: _candidateNames[i],
+            voteCount: 0
+        }));
+    }
+    owner = msg.sender;
+    votingStart = block.timestamp;
+    votingEnd = block.timestamp + (_durationInMinutes * 1 minutes);
+}
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function addCandidate(string memory _name) public onlyOwner {
+        candidates.push(Candidate({
+                name: _name,
                 voteCount: 0
-            }));
-        }
+        }));
     }
 
-    // Function for voters to cast their votes
-    function vote(uint proposal) public {
-        Voter storage sender = voters[msg.sender];
-        require(!sender.voted, "You have already voted.");
-        sender.voted = true;
-        sender.vote = proposal;
-        proposals[proposal].voteCount += sender.weight;
+    function vote(uint256 _candidateIndex) public {
+        require(!voters[msg.sender], "You have already voted.");
+        require(_candidateIndex < candidates.length, "Invalid candidate index.");
+
+        candidates[_candidateIndex].voteCount++;
+        voters[msg.sender] = true;
     }
 
-    // Function to get the total number of candidates
-    function getCandidateCount() public view returns (uint) {
-        return proposals.length;
+    function getAllVotesOfCandiates() public view returns (Candidate[] memory){
+        return candidates;
     }
 
-    // Function to get the total number of votes for a candidate
-    function getTotalVotesForCandidate(uint candidateIndex) public view returns (uint) {
-        require(candidateIndex < proposals.length, "Invalid candidate index.");
-        return proposals[candidateIndex].voteCount;
+    function getVotingStatus() public view returns (bool) {
+        return (block.timestamp >= votingStart && block.timestamp < votingEnd);
+    }
+
+    function getRemainingTime() public view returns (uint256) {
+        require(block.timestamp >= votingStart, "Voting has not started yet.");
+        if (block.timestamp >= votingEnd) {
+            return 0;
+    }
+        return votingEnd - block.timestamp;
     }
 }

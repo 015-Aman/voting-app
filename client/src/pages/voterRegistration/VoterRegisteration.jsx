@@ -59,11 +59,18 @@ function VoterRegistration() {
     }
 
     // Hash the password
-    const hashedPassword = await bcrypt.hash(formData.password, 5);
+    // const hashedPassword = await bcrypt.hash(formData.password, 5);///////////////
+    const hashedPassword =formData.password;
+
+    console.log(hashedPassword);
+    console.log("has a ",hashedPassword);
 
     // Upload the file first
     const url = await upload(formData.file);
     const url2 = await upload(formData.aadharimg);
+
+    console.log("has a ",hashedPassword);
+
 
     try {
       // Send the registration data along with the uploaded file URL

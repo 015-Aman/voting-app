@@ -2,10 +2,14 @@ const Voter = require("../models/voter.model.js");
 const createError = require("../utils/createError.js");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+// const Web3 = require('web3');
+const Candidate = require("../models/candidate.model");
+
 
 const registerVoter = async (req, res, next) => {
   try {
-    const hash = bcrypt.hashSync(req.body.password, 5);
+    // const hash = bcrypt.hashSync(req.body.password, 5);////////////
+    const hash = req.body.password;
     const { name, aadharNumber, dateOfBirth, address, aadharimg, district, constituency, pincode, file } = req.body;
 
     console.log(req.body);
@@ -38,10 +42,17 @@ const registerVoter = async (req, res, next) => {
 
 const loginVoter = async (req, res, next) => {
   try {
+
+    console.log("xxfflllllllllj",req.body);
+
+
     const { aadharNo, password } = req.body;
 
     // Find voter by Aadhar number
     const voter = await Voter.findOne({ aadharNumber: aadharNo });
+    console.log("voter",voter);
+    console.log("xxffllll",voter.password);
+
 
     // Check if voter exists
     if (!voter) {
@@ -49,14 +60,20 @@ const loginVoter = async (req, res, next) => {
     }
 
     // Compare hashed password
-    const isPasswordValid = await bcrypt.compare(password, voter.password);
+    // const isPasswordValid =  bcrypt.compareSync(password, voter.password);////
+    const isPasswordValid =  password == voter.password ? true:false;
+
+
+    console.log("fg",password,voter.password);
 
     if (!isPasswordValid) {
       return next(createError(401, "Invalid password"));
     }
 
+    console.log("voterverifiefg",voter.verified);
+
     if (!voter.verified) {
-      return res.send({ verified: false });
+      return res.send(false);
     }
 
     // Generate JWT token
@@ -94,14 +111,16 @@ const changePassword = async (req, res) => {
   console.log("Coming data", req.body);
   const id = req.body.currentUser._id;
   const newPassword = req.body.newPassword;
+
+  const hash = newPassword;
   //encrypt
-  const hash = bcrypt.hashSync(newPassword, 5);
+  // const hash = bcrypt.hashSync(newPassword, 5);
   //match previous password
-  const orghash = bcrypt.hashSync(req.body.currentPassword, 5);
-  if (orghash === req.body.currentUser.password) {
-    console.error('original password wrong ');
-    res.status(400).send({ message: "Wrong Password" });
-  }
+  // const orghash = bcrypt.hashSync(req.body.currentPassword, 5);
+  // if (orghash === req.body.currentUser.password) {
+  //   console.error('original password wrong ');
+  //   res.status(400).send({ message: "Wrong Password" });
+  // }
   //save encrypted password
   try {
     const updatedUser = await Voter.findByIdAndUpdate(id, { password: hash }, { new: true });
@@ -118,7 +137,54 @@ const changePassword = async (req, res) => {
   }
 }
 
+const getCandidates = async (req, res, next) => {
+  // try{
+    // const accounts = await Web3.eth.getAccounts();
+    // const userAddress = accounts[0];
 
+    // // Find the voter document in MongoDB with the given public address
+    // const voter = await Voter.findOne({ publicAddress: userAddress }).exec();
+
+    // if (voter) {
+      // Voter found in MongoDB, show list of candidates
+      try {
+        // Fetch all candidates from the database
+        const candidates = await Candidate.find();
+        // Check if there are no candidates found
+        if (!candidates || candidates.length === 0) {
+          throw createError(404, "No candidates found");
+        }
+        // Send response with the list of candidates
+        res.status(200).json({ candidates });
+      } catch (error) {
+        // Forward error to error handling middleware
+        next(error);
+      }
+      // res.send('List of candidates...');
+    // } 
+    // else {
+    //   // Voter not found, indicate mismatch
+    //   res.send('Error: Account not authorized.');
+    // }
+  // } catch (error) {
+  //   console.error('Error:', error);
+  //   res.status(500).send('Internal Server Error');
+  // }
+  
+  try {
+    // Fetch all candidates from the database
+    const candidates = await Candidate.find();
+    // Check if there are no candidates found
+    if (!candidates || candidates.length === 0) {
+      throw createError(404, "No candidates found");
+    }
+    // Send response with the list of candidates
+    res.status(200).json({ candidates });
+  } catch (error) {
+    // Forward error to error handling middleware
+    next(error);
+  }
+};
 module.exports = {
-  registerVoter, loginVoter, logoutVoter, changePassword
+  registerVoter, loginVoter, logoutVoter, changePassword, getCandidates
 };

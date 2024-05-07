@@ -45,6 +45,10 @@ const voterSchema = new Schema({
   verified:{
     type:Boolean,
     default:false
+  },
+  public_address:{
+    type: String,
+    default: "0xd2e840236d6284c7b52FB4fF1BDA46596b4d8215"
   }
 }, {
   timestamps: true

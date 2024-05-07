@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
-
+const Web3 = require('web3');
 
 
 const voterauthRoute = require("./routes/voter.auth.route.js");
@@ -13,7 +13,6 @@ const candidateRoute = require("./routes/candidate.route.js");
 const candidateverifyRoute = require("./routes/candidate.verfiy.route.js");
 const voterverifyRoute = require("./routes/voter.verify.route.js");
 const electionRoute = require("./routes/election.route.js");
-
 
 const app = express();
 dotenv.config();
@@ -29,6 +28,7 @@ const connect = async () => {
 };
 
 app.use(cors({ origin: "http://127.0.0.1:5173", credentials: true }));
+// app.use(cors({ origin: *, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 

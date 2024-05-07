@@ -83,7 +83,7 @@ function VoterLogin() {
       console.log("passwore",password);
 
       // Fetch user data from the server
-      const res = await newRequest.post("voter/auth/login", { aadharNo });
+      const res = await newRequest.post("voter/auth/login", { aadharNo,password });
 
       console.log("front res",res);
       
@@ -104,18 +104,20 @@ function VoterLogin() {
       //   setPassword("");
       //   return;
       // }
-
+/*
       // Compare hashed password
-      const isPasswordCorrect = await bcrypt.compare(password, res.data.hashedPassword);
-      if (!isPasswordCorrect) {
-        // Incorrect password
-        alert("Invalid Aadhar Number or password.");
-        // Clear input fields
-        setAadharNo("");
-        setPassword("");
-        return;
-      }
+      // const isPasswordCorrect = await bcrypt.compare(password, res.data.hashedPassword);//
+      // const isPasswordCorrect = password === res.data.hashedPassword ? true:false;
 
+      // if (!isPasswordCorrect) {
+      //   // Incorrect password
+      //   alert("Invalid Aadhar Number or password.");
+      //   // Clear input fields
+      //   setAadharNo("");
+      //   setPassword("");
+      //   return;
+      // }
+*/
       localStorage.setItem("currentUser", JSON.stringify(res.data));
 
       navigate("/voterdash");

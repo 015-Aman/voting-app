@@ -35,13 +35,34 @@ function AdminDashboard() {
     // Add more fields as needed
   });
 
-  const toggleVerification = async (candidate) => {
+  const toggleVerificationCad = async (candidate) => {
     try {
   
       // Send a request to update the candidate's verified status
       console.log("Info ",candidate)
 
       const response = await newRequest.post("admin/auth/verifycandidate", {candidate});
+  
+      console.log(response);
+  
+      // Update the candidateData state to reflect the changes
+      setCandidateData(prevCandidates => prevCandidates.map(prevCandidate => {
+        if (prevCandidate._id === candidate._id) {
+          return { ...prevCandidate, verified: true };
+        }
+        return prevCandidate;
+      }));
+    } catch (error) {
+      console.error("Error toggling verification:", error);
+    }
+  };
+  const toggleVerificationVot = async (voter) => {
+    try {
+  
+      // Send a request to update the candidate's verified status
+      console.log("Info ",voter)
+
+      const response = await newRequest.post("admin/auth/verifyvoter", {voter});
   
       console.log(response);
   
@@ -178,7 +199,7 @@ const handleChangePassword = async () => {
       const filteredCandidates = candidates.filter(candidate => (candidate.constituency === currentUser.constituency));
       setCandidateData(filteredCandidates);
       // console.log(candidateData);
-    } catch (error) {
+    } catch (error) { 
       console.error("Error fetching candidate data:", error);
     }
   };
@@ -484,7 +505,7 @@ const handleChangePassword = async () => {
               <li key={index}>
                 <div>
                   <div>
-                    <h2>Candidate Information</h2>
+                    <h2>Candidate's Information</h2>
                     <p>Name: {candidate.name}</p>
                     <p>Party Name: {candidate.partyname}</p>
                     <p>Slogan: {candidate.slogan}</p>
@@ -497,14 +518,14 @@ const handleChangePassword = async () => {
                     {/* Assuming verified is a property in candidate data */}
                     <p>Verified: {candidate.verified ? 'True' : 'False'}</p>
                     {/* Assuming you have a function to toggle verification status */}
-                    {candidate.verified === false && (<button onClick={() => toggleVerification(candidate)}>Unverified</button>)}
+                    {candidate.verified === false && (<button onClick={() => toggleVerificationCad(candidate)}>Unverified</button>)}
                     <br />
                     <img src={candidate.file} alt="Candidate ID" height={150} width={200}/>
                     {/* <img src={candidate.aadharimg} alt="Candidate ID" /> */}
                     <img
       src={candidate.aadharimg}
       alt="Aadhar Card"
-      style={{ maxWidth: "600px", height: "auto", marginTop: "10px" }}
+      style={{ maxWidth: "200px", height: "auto", marginTop: "10px" }}
     />
                   </div>
                 </div>
@@ -526,7 +547,7 @@ const handleChangePassword = async () => {
               <li key={index}>
                 <div>
                   <div>
-                    <h2>Candidate Information</h2>
+                    <h2>Voter's Information</h2>
                     <p>Name: {voter.name}</p>
                     <p>Aadhar Number: {voter.aadharNumber}</p>
                     <p>Date of Birth: {new Date(voter.dateOfBirth).toLocaleDateString()}</p>
@@ -537,14 +558,14 @@ const handleChangePassword = async () => {
                     {/* Assuming verified is a property in candidate data */}
                     <p>Verified: {voter.verified ? 'True' : 'False'}</p>
                     {/* Assuming you have a function to toggle verification status */}
-                    <button onClick={() => toggleVerification(voter)}>Toggle Verification</button>
+                    <button onClick={() => toggleVerificationVot(voter)}>Toggle Verification</button>
                     <br />
                     <img  src={voter.file} alt="Candidate ID" height={150} width={200} />
                     {/* <img  src={voter.aadharimg} alt="Candidate ID" /> */}
                     <img
                         src={voter.aadharimg}
                         alt="Candidate ID"
-                        style={{ maxWidth: "600px", height: "auto", marginTop: "10px" }}
+                        style={{ maxWidth: "200px", height: "auto", marginTop: "10px" }}
                       />
 
                   </div>

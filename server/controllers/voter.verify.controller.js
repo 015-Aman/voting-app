@@ -5,7 +5,7 @@ const verifyVoter = async (req, res, next) => {
   try {
     // Fetch all voters from the database
     const voters = await Voter.find({ verified: false });
-    console.log("backend all voters",voters)
+    console.log("backend all voters",voters) 
 
     // Check if there are no voters found
     if (!voters || voters.length === 0) {

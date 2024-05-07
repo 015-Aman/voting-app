@@ -46,11 +46,11 @@ function CandidateRegistration() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+])[0-9a-zA-Z!@#$%^&*()_+]{8,}$/;
-    if (!passwordRegex.test(formData.password)) {
-      alert("Password must contain at least one uppercase letter, one lowercase letter, one symbol, one digit, and be at least 8 characters long. Please re-enter.");
-      return;
-    }
+    // const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+])[0-9a-zA-Z!@#$%^&*()_+]{8,}$/;
+    // if (!passwordRegex.test(formData.password)) {
+    //   alert("Password must contain at least one uppercase letter, one lowercase letter, one symbol, one digit, and be at least 8 characters long. Please re-enter.");
+    //   return;
+    // }
 
     if (formData.aadharNumber.length !== 12) {
       alert("Aadhar number must be exactly 12 digits long. Please re-enter.");
