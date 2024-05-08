@@ -1,8 +1,10 @@
 const Voting = artifacts.require("Voting");
 
+
 module.exports = async function(deployer) {
+
   // Deploy the Voting contract with constructor arguments
-  await deployer.deploy(Voting, ["Mark", "Mike", "Henry", "Rock"], 90);
+  await deployer.deploy(Voting, ["Uma Devi","Dinanath Singh Chauhan","Shivraj Rathore"], 90000);
 
   // Retrieve the deployed contract instance
   const votingInstance = await Voting.deployed();

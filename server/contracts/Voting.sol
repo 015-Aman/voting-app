@@ -23,6 +23,7 @@ constructor(string[] memory _candidateNames, uint256 _durationInMinutes) public 
             voteCount: 0
         }));
     }
+    
     owner = msg.sender;
     votingStart = block.timestamp;
     votingEnd = block.timestamp + (_durationInMinutes * 1 minutes);

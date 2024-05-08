@@ -19,7 +19,7 @@
       button {
         padding: 10px 20px;
         margin-right: 10px;
-        background-color: #007bff;
+        background-color: #242c34;
         color: #fff;
         border: none;
         border-radius: 5px;
@@ -82,21 +82,42 @@
 
     .voter-list {
       display: flex;
-      align-items: center;
-    
-      .voter-info {
-        margin-left: 20px; // Adjust as needed for spacing between image and details
-        display: flex;
-        flex-direction: row; // Display details in a column
-      }
-    
-      img {
-        height: 100px; // Adjust the height as needed
-        width: 100px; // Adjust the width as needed
-        border-radius: 50%; // Make the image circular
-        object-fit: cover; // Ensure the image covers the entire space without stretching
-      }
+      align-items: flex-start;
     }
+    
+    .voter-image {
+      margin-right: 20px;
+    }
+    
+    .voter-image img {
+      height: 300px;
+      width: 300px;
+      border-radius: 8px; // Update border radius if necessary
+      object-fit: cover;
+      margin-left: 150px;
+    }
+    
+    .voter-details {
+      margin-left: 50px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .voter-info {
+      margin-bottom: 10px;
+      display: flex;
+      align-items: flex-start;
+    }
+    
+    .info-title {
+      margin-bottom: 10px;
+      display: flex;
+      align-items: flex-start;
+      font-weight: bold;
+      min-width: 120px; // Adjust the width to ensure consistent spacing
+      margin-right: 10px; // Add some space between title and value
+    }
+    
     
     
     .voter-details,
@@ -120,7 +141,40 @@
   .cast-vote h2 {
     margin-bottom: 10px;
   }
+
+  .candidates-table-container {
+    display: flex;
+    justify-content: center; /* Horizontally center the table */
+    align-items: center; /* Vertically center the table */
+  }
   
+  #myTable {
+    // display: flex;
+    align-items: center;
+    // justify-content: center;
+    margin-bottom: 20px;
+    border: 2px solid #181717;
+    border-radius: 10px;
+    padding: 10px;
+    background-color: #e6cece;
+    margin-top: 10px;
+    max-width: 1000px;
+    height: 300px;
+    margin-bottom: 10px;
+  }
+  
+  #myTable th,
+  #myTable td {
+    border: 2px solid #e6cece;
+    padding: 10px;
+    text-align: center;
+    font-size: large;
+  }
+
+  #myTable th {
+    background-color: #efa2a2;
+    color: #fff;
+  }
   
   .candidate-container {
     display: flex;

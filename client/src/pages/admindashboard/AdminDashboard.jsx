@@ -58,25 +58,23 @@ function AdminDashboard() {
   };
   const toggleVerificationVot = async (voter) => {
     try {
-  
-      // Send a request to update the candidate's verified status
-      console.log("Info ",voter)
-
-      const response = await newRequest.post("admin/auth/verifyvoter", {voter});
-  
+      // Send a request to update the voter's verified status
+      console.log("Info ", voter);
+      const response = await newRequest.post("admin/auth/verifyvoter", { voter });
       console.log(response);
-  
-      // Update the candidateData state to reflect the changes
-      setCandidateData(prevCandidates => prevCandidates.map(prevCandidate => {
-        if (prevCandidate._id === candidate._id) {
-          return { ...prevCandidate, verified: true };
+    
+      // Update the voterData state to reflect the changes
+      setVoterData(prevVoters => prevVoters.map(prevVoter => {
+        if (prevVoter._id === voter._id) {
+          return { ...prevVoter, verified: true };
         }
-        return prevCandidate;
+        return prevVoter;
       }));
     } catch (error) {
       console.error("Error toggling verification:", error);
     }
   };
+  
   
 
 // const [password, setPassword] = useState("");
@@ -518,7 +516,7 @@ const handleChangePassword = async () => {
                     {/* Assuming verified is a property in candidate data */}
                     <p>Verified: {candidate.verified ? 'True' : 'False'}</p>
                     {/* Assuming you have a function to toggle verification status */}
-                    {candidate.verified === false && (<button onClick={() => toggleVerificationCad(candidate)}>Unverified</button>)}
+                    {candidate.verified === false && (<button onClick={() => toggleVerificationCad(candidate)}>Verify</button>)}
                     <br />
                     <img src={candidate.file} alt="Candidate ID" height={150} width={200}/>
                     {/* <img src={candidate.aadharimg} alt="Candidate ID" /> */}
@@ -558,7 +556,7 @@ const handleChangePassword = async () => {
                     {/* Assuming verified is a property in candidate data */}
                     <p>Verified: {voter.verified ? 'True' : 'False'}</p>
                     {/* Assuming you have a function to toggle verification status */}
-                    <button onClick={() => toggleVerificationVot(voter)}>Toggle Verification</button>
+                    <button onClick={() => toggleVerificationVot(voter)}>Verify</button>
                     <br />
                     <img  src={voter.file} alt="Candidate ID" height={150} width={200} />
                     {/* <img  src={voter.aadharimg} alt="Candidate ID" /> */}

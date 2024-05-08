@@ -24,7 +24,7 @@ function VoterDashboard() {
   const [account, setAccount] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [votingStatus, setVotingStatus] = useState(true);
-  const [remainingTime, setremainingTime] = useState('');
+  const [remainingTime, setremainingTime] = useState(0);
   const [candidate, setCandidate] = useState([]);
   const [number, setNumber] = useState('');
   const [CanVote, setCanVote] = useState(true);
@@ -33,6 +33,7 @@ function VoterDashboard() {
     getCandidate();
     getRemainingTime();
     getCurrentStatus();
+
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', handleAccountsChanged);
     }
@@ -72,6 +73,18 @@ async function canVote() {
     const voteStatus = await contractInstance.voters(await signer.getAddress());
     setCanVote(voteStatus);
 
+}
+
+function handleAccountsChanged(accounts) {
+  const acc = JSON.stringify(accounts);
+  
+  if (accounts.length > 0 && account !== accounts[0]) {
+    setAccount(accounts[0]);
+    canVote();
+  } else {
+    setIsConnected(false);
+    setAccount(null);
+  }
 }
 
 async function getCandidate() {
@@ -116,22 +129,11 @@ async function getRemainingTime() {
     const time = await contractInstance.getRemainingTime();
     setremainingTime(parseInt(time, 16));
 }
-  function handleAccountsChanged(accounts) {
-    if (accounts.length > 0 && account !== accounts[0]) {
-      setAccount(accounts[0]);
-      canVote();
-    } else {
-      setIsConnected(false);
-      setLoggedIn(false);
-      setAccount(null);
-      console.log("Metamask Connected : " + address);
-    }
-  }
 
-  const connectWallet = async () => {
+const connectWallet = async () => {
     // Perform actions to connect the wallet (e.g., MetaMask)
     // Once connected, update the loggedIn state to true
-
+    
     if(window.ethereum){
       try{
         const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -143,9 +145,11 @@ async function getRemainingTime() {
         console.log("Metamask Connected : " + address);
 
         //yha check krna hai ye address aur loggedin user ka address same hai ya ni
-
+        if(address === currentUser.public_address){
+          setIsConnected(true);
+        }
         setLoggedIn(true);
-        setIsConnected(true);
+        // setIsConnected(true);
         canVote();
       } catch (err) {
         console.log(err);
@@ -153,7 +157,7 @@ async function getRemainingTime() {
     } else {
       console.error("Metamask not detected in browser");
     }
-  };
+};
 
   const handleChangePassword = async () => {
     try {
@@ -195,7 +199,7 @@ async function getRemainingTime() {
     try {
       const response = await newRequest.get("voter/auth/candidates");
       const candidateData = response.data.candidates;
-      const filteredCandidates = candidateData.filter(candidates => candidates.constituency === currentUser.constituency);
+      const filteredCandidates = candidateData.filter(candidates => candidates.constituency === currentUser.constituency && candidates.verified == true);
       
       console.log("Candidate data:", filteredCandidates);
       setCandidates(filteredCandidates);
@@ -238,6 +242,7 @@ async function getRemainingTime() {
     console.log(candidates);
     setCastVote(true);
     setShowChangePassword(false);
+    // handleAccountsChanged();
   };
 
   const handleChangePwd = () =>{
@@ -266,7 +271,6 @@ async function getRemainingTime() {
         <button onClick={handleViewVotingHistory}>View Voting History</button>
         <button onClick={handleLogout}>Logout</button>
       </div>
-
 
       { showChangePassword && (
         <div className="change-password-form">
@@ -300,16 +304,34 @@ async function getRemainingTime() {
 
       {viewVoterDetails && (
         <div className="voter-list">
-          <div><img src={currentUser.file} alt="Voter Image" height={100} width={100} /></div>
-          <div className="voter-info">Name: {currentUser.name}</div>
-          <div className="voter-info">Aadhar Number: {currentUser.aadharNumber}</div>
-          <div className="voter-info">Date of Birth: {new Date(currentUser.dateOfBirth).toLocaleDateString()}</div>
-          <div className="voter-info">Address: {currentUser.address}</div>
-          <div className="voter-info">District: {currentUser.district}</div>
-          <div className="voter-info">Constituency: {currentUser.constituency}</div>
-          <div className="voter-info">Pincode: {currentUser.pincode}</div>
-
+        <div className="voter-image">
+          <img src={currentUser.file} alt="Voter Image" />
         </div>
+        <div className="voter-details">
+          <div className="voter-info">
+            <span className="info-title">Name:</span> <span>{currentUser.name}</span>
+          </div>
+          <div className="voter-info">
+            <span className="info-title">Aadhar Number:</span> <span>{currentUser.aadharNumber}</span>
+          </div>
+          <div className="voter-info">
+            <span className="info-title">Date of Birth:</span> <span>{new Date(currentUser.dateOfBirth).toLocaleDateString()}</span>
+          </div>
+          <div className="voter-info">
+            <span className="info-title">Address:</span> <span>{currentUser.address}</span>
+          </div>
+          <div className="voter-info">
+            <span className="info-title">District:</span> <span>{currentUser.district}</span>
+          </div>
+          <div className="voter-info">
+            <span className="info-title">Constituency:</span> <span>{currentUser.constituency}</span>
+          </div>
+          <div className="voter-info">
+            <span className="info-title">Pincode:</span> <span>{currentUser.pincode}</span>
+          </div>
+        </div>
+      </div>
+      
       )}
 
       {viewCandidateDetails && (
@@ -332,41 +354,49 @@ async function getRemainingTime() {
         </div>
       )}
 
-      {loggedIn && castVote && (
+
+      {!remainingTime && castVote && (
+        <h2>Voting is Ended</h2>
+      )}
+      {loggedIn && isConnected && castVote && (
         <div className="cast-vote">
           <h2>Cast Vote</h2>
           <h3>Metamask Account: {account}</h3>
-          <h4>Remaining time to vote: {remainingTime} seconds</h4>
+          <h4>Remaining time to vote: {remainingTime/60} minutes</h4>
           {/* Display voter details here */}
 
-          { !canVote ? (
+          { CanVote ? (
             <p className="connected-account">You have already voted.</p>
           ) : (
           <div>
-            <input type="number" placeholder="Entern Candidate Index" value={number} onChange={handleNumberChange}></input>
+            <input type="number" placeholder="Enter Candidate Index" value={number} onChange={handleNumberChange}></input>
             <br />
             <button className="login-button" onClick={vote}>Vote</button>
           </div>
           )}
 
-          <table id="myTable" className="candidates-table">
+
+        <div className="candidates-table-container">
+            <table id="myTable" className="candidates-table">
                 <thead>
-                <tr>
-                    <th>Index</th>
-                    <th>Candidate name</th>
-                    <th>Candidate votes</th>
-                </tr>
+                    <tr>
+                        <th>Index</th>
+                        <th>Candidate name</th>
+                        <th>Candidate votes</th>
+                    </tr>
                 </thead>
                 <tbody>
-                {candidate.map((candidate, index) => (
+                    {candidate.map((candidate, index) => (
                     <tr key={index}>
-                    <td>{candidate.index}</td>
-                    <td>{candidate.name}</td>
-                    <td>{candidate.voteCount}</td>
+                        <td>{candidate.index}</td>
+                        <td>{candidate.name}</td>
+                        <td>{candidate.voteCount}</td>
                     </tr>
-                ))}
+                    ))}
                 </tbody>
             </table>
+        </div>
+
 
           {candidates.map(candidate => (
             <div key={candidate._id} className="candidate-container">
@@ -377,7 +407,7 @@ async function getRemainingTime() {
                 <h3>{candidate.name}</h3>
                 <p>Party Name: {candidate.partyname}</p>
                 <p>Slogan: {candidate.slogan}</p>
-                <button className="vote-button" onClick={() => vote(currentUser)}>Vote</button>
+                {/* <button className="vote-button" onClick={() => vote(currentUser)}>Vote</button> */}
                 {/* Render additional candidate details as needed */}
               </div>
             </div>
@@ -385,7 +415,7 @@ async function getRemainingTime() {
         </div>
       )}
 
-      {!loggedIn && (
+      {!loggedIn && castVote && (
         <div className="login-container">
           <h1 className="welcome-message">Welcome to decentralized voting application</h1>
           <div className="login">
@@ -394,6 +424,13 @@ async function getRemainingTime() {
         </div>
       )}
 
+      {loggedIn && !isConnected && castVote && (
+        <div>
+          <h2>Your account and metamask account didn't match.</h2>
+          <h3>Metamask Account: {account}</h3>
+          <h3>Your Account: {currentUser.public_address}</h3>
+        </div>
+      )}
 
       {viewVotingHistory && (
         <div className="voting-history">
