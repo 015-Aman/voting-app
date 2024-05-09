@@ -88,6 +88,8 @@ const handleChangePassword = async () => {
     const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+])[0-9a-zA-Z!@#$%^&*()_+]{8,}$/;
     if (!passwordRegex.test(newPassword)) {
       alert("Password must contain at least one uppercase letter, one lowercase letter, one symbol, one digit, and be at least 8 characters long. Please re-enter.");
+      setNewPassword("");
+      setConfirmPassword("");
       return;
     }
 
@@ -100,11 +102,13 @@ const handleChangePassword = async () => {
       // If new password and confirm password don't match, show an error message
       console.error("New password and confirm password do not match.");
       alert("New password and confirm password do not match.");
+      setConfirmPassword("");
       return;
     }
     console.log("current user details",currentUser);
     const response = await newRequest.post("admin/auth/changepassword", {currentUser,newPassword});
     console.log("Password changed successfully:", response);
+    alert("Password changed successfully");
 
     // Reset the input fields after successful password change
     setCurrentPassword("");

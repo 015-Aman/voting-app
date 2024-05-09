@@ -161,16 +161,27 @@ const connectWallet = async () => {
 
   const handleChangePassword = async () => {
     try {
+
+      const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+])[0-9a-zA-Z!@#$%^&*()_+]{8,}$/;
+      if (!passwordRegex.test(newPassword)) {
+        alert("Password must contain at least one uppercase letter, one lowercase letter, one symbol, one digit, and be at least 8 characters long. Please re-enter.");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        return;
+      }
       
       if (newPassword !== confirmPassword) {
         // If new password and confirm password don't match, show an error message
         alert("New password and confirm password do not match")
         console.error("New password and confirm password do not match.");
+        setConfirmPassword("");
         return;
       }
       
       console.log("current user details",currentUser);
       const response = await newRequest.post("voter/auth/changepassword", {currentUser,newPassword, currentPassword});
+      alert("Password Changed Successfully");
       console.log("Password changed successfully:", response);
 
       // Reset the input fields after successful password change
