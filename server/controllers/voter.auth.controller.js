@@ -185,6 +185,21 @@ const getCandidates = async (req, res, next) => {
     next(error);
   }
 };
+
+const getVoters = async (req, res, next) => {
+      try {
+        const voters = await Voter.find();
+        // Check if there are no candidates found
+        if (!voters || voters.length === 0) {
+          throw createError(404, "No voters found");
+        }
+        // Send response with the list of candidates
+        res.status(200).json({ voters });
+      } catch (error) {
+        // Forward error to error handling middleware
+        next(error);
+      }
+};
 module.exports = {
-  registerVoter, loginVoter, logoutVoter, changePassword, getCandidates
+  registerVoter, loginVoter, logoutVoter, changePassword, getCandidates, getVoters
 };

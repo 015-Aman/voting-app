@@ -87,7 +87,77 @@
     }
   }
   
+  .voting-history {
+    margin-top: 20px;
   
+    .voting-box {
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 20px;
+  
+      .results-container {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+  
+        .chart-container {
+          width: 45%;
+          margin-bottom: 20px;
+          border: 1px solid #ccc;
+          border-radius: 10px;
+          box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+          transition: transform 0.3s ease;
+  
+          &:hover {
+            transform: translateY(-3px);
+          }
+  
+          h3 {
+            padding: 8px;
+            background-color: #f0f0f0;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            margin: 0;
+            text-align: center !important;
+          }
+  
+          .chart {
+            padding: 15px;
+            background-color: #fff;
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+            text-align: center;
+  
+            .google-visualization-tooltip {
+              text-align: left;
+            }
+  
+            // Add 3D effect
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+  
+            &:hover {
+              transform: translateY(-3px);
+            }
+          }
+  
+          .chart-description {
+            text-align: center;
+  
+            h4 {
+              margin-bottom: 8px;
+            }
+          }
+        }
+      }
+    }
+  }
+    
+
 
   .change-password-form {
     max-width: 400px;
@@ -232,56 +302,65 @@
   
 
   .candidate-list,
-  .voter-list {
-    margin-top: 20px;
+.voter-list {
+  margin-top: 20px;
 
-    h2 {
-      font-size: 20px;
-      margin-bottom: 10px;
-    }
+  h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
 
-    ul {
-      list-style-type: none;
-      padding: 0;
+  ul {
+    list-style-type: none;
+    padding: 0;
 
-      li {
-        margin-bottom: 20px;
+    li {
+      margin-bottom: 20px;
+      display: flex; // Use flexbox to align items horizontally
 
-        div {
-          background-color: #f9f9f9;
-          padding: 15px;
+      div {
+        background-color: #f9f9f9;
+        padding: 15px;
+        border-radius: 5px;
+        flex: 1; // Take up remaining space
+
+        h2 {
+          font-size: 18px;
+          margin-bottom: 10px;
+        }
+
+        p {
+          margin: 5px 0;
+        }
+
+        button {
+          padding: 5px 10px;
+          background-color: #dc3545;
+          color: #fff;
+          border: none;
           border-radius: 5px;
+          cursor: pointer;
+          transition: background-color 0.3s;
 
-          h2 {
-            font-size: 18px;
-            margin-bottom: 10px;
+          &:hover {
+            background-color: #c82333;
           }
+        }
+      }
 
-          p {
-            margin: 5px 0;
-          }
+      .image-container {
+        flex: 1; // Take up remaining space
+        display: flex;
+        justify-content: flex-end; // Align photo to the right
 
-          button {
-            padding: 5px 10px;
-            background-color: #dc3545;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-
-            &:hover {
-              background-color: #c82333;
-            }
-          }
-
-          img {
-            max-width: 600px;
-            height: auto;
-            margin-top: 10px;
-          }
+        img {
+          max-width: 200px; // Adjust the width as needed
+          height: auto;
+          margin-top: 10px;
+          padding: 10px;
         }
       }
     }
   }
+}
 }

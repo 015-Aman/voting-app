@@ -5,6 +5,9 @@ import newRequest from "../../utils/newRequest";
 import "./AdminDashboard.scss";
 import { useNavigate } from "react-router-dom";
 import Chart from "react-google-charts";
+import {ethers} from 'ethers';
+import { contractAbi, contractAddress } from "../../../../server/constants/constant";
+
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -25,6 +28,10 @@ function AdminDashboard() {
   const [candidate, setCandidate] = useState(false);
   const [voter, setVoter] = useState(false);
 
+  const [resultCandidate, setResultCandidate] = useState([]);
+  const [totalVotes, setTotalVotes] = useState();
+  const [personVoted, setPersonVoted] = useState();
+
   const [subAdminFormData, setSubAdminFormData] = useState({
   
     name:"",
@@ -34,6 +41,53 @@ function AdminDashboard() {
     password: "",
     // Add more fields as needed
   });
+
+  async function getCandidate() {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = provider.getSigner();
+    const contractInstance = new ethers.Contract (
+      contractAddress, contractAbi, signer
+    );
+    const candidateList = await contractInstance.getAllVotesOfCandiates();
+    // console.log(candidateList);
+    const formattedCandidates = candidateList.map((candidate, index) => {
+      return {
+        index: index,
+        name: candidate.name,
+        voteCount: candidate.voteCount.toNumber()
+      }
+    });
+    setResultCandidate(formattedCandidates);
+  }
+
+  const fetchVoters = async () => {
+    try {
+      const response = await newRequest.get("voter/auth/voters");
+      const voterData = response.data.voters;
+      const filteredVoters = voterData.filter(voters => voters.constituency === "Dhanbad" && voters.verified == true);
+      const cnt = resultCandidate.reduce((total, candidate) => total + candidate.voteCount, 0);
+      console.log("Voters data:", filteredVoters);
+      // setVoters(filteredVoters);
+      setTotalVotes(filteredVoters.length);
+      setPersonVoted(cnt);
+    } catch (error) {
+      console.error("Error fetching voters:", error);
+      // Handle the error gracefully, e.g., display an error message to the user
+    }
+  };
+
+  const formatChartData = (electionResults) => {
+    // Example format: [["Constituency", "Votes"], ["Constituency 1", 100], ["Constituency 2", 200], ...]
+    const chartData = electionResults.map((result) => [
+      result.name,
+      result.voteCount,
+    ]);
+    // const chartData = [["Candidate A", 20], ["Candidate B", 10], ["Candidate C", 13], ["Candidate D", 15]]
+    // // Add header row
+    chartData.unshift(["Candidates", "Votes"]);
+    return chartData;
+  };
 
   const toggleVerificationCad = async (candidate) => {
     try {
@@ -130,6 +184,8 @@ const handleChangePassword = async () => {
       setCurrentUser(parsedData);
       console.log(currentUser);
     }
+    fetchVoters();
+    getCandidate();
   }, []);
 
   const handleStartDateChange = (date) => {
@@ -168,6 +224,7 @@ const handleChangePassword = async () => {
     setShowChangePassword(false);
     setCandidateData([]);
     setVoterData([]);
+    setStartElection(false);
     setShowSubAdminForm(false);
     setShowSubAdmin(null);
     setShowSubAdminForm(false);
@@ -324,22 +381,11 @@ const handleChangePassword = async () => {
     setShowSubAdmin(null);
     setShowSubAdminForm(false);
     setSubAdminList([]);
+    setStartElection(false);
     setShowResult(false);
     setCandidate(false);
     setVoter(false);
   }
-
-  const formatChartData = (electionResults) => {
-    // Example format: [["Constituency", "Votes"], ["Constituency 1", 100], ["Constituency 2", 200], ...]
-    // const chartData = electionResults.map((result) => [
-    //   result.constituency,
-    //   result.votes,
-    // ]);
-    const chartData = [["Candidate A", 20], ["Candidate B", 10], ["Candidate C", 13], ["Candidate D", 15]]
-    // Add header row
-    chartData.unshift(["Candidates", "Votes"]);
-    return chartData;
-  };
 
   return (
     
@@ -368,20 +414,122 @@ const handleChangePassword = async () => {
   )}
 </div>
 
-      { showResult && (<div className="pie-chart-container">
-        <h2>Election Results</h2>
-        <Chart
-          width={"500px"}
-          height={"300px"}
-          chartType="PieChart"
-          loader={<div>Loading Chart...</div>}
-          data={formatChartData(electionResults)}
-          options={{
-            title: "Election Results",
-          }}
-          rootProps={{ "data-testid": "1" }}
-        />
-      </div>)}
+      { showResult && (
+      <div className="voting-history">
+      <div className="voting-box">
+        <h3>Bokaro Election Results</h3>
+      <div className="results-container">
+        <div className="chart-container">
+          <h3>Election Results</h3>
+          <div className="chart">
+            <Chart
+              width={"100%"}
+              height={"300px"}
+              chartType="PieChart"
+              loader={<div>Loading Chart...</div>}
+              data={formatChartData(resultCandidate)}
+              // options={{
+              //   title: "Election Results",
+              // }}
+              rootProps={{ "data-testid": "1" }}
+            />
+          </div>
+          <div className="chart-description">
+            {resultCandidate.map((candidate, index) => (
+            <div key={index} className="candidate">
+              {/* <div className="candidate-index">{candidate.index}</div> */}
+              <div className="candidate-details">
+                <h4>{candidate.name}: {candidate.voteCount}</h4>
+              </div>
+            </div>
+          ))}
+          </div>
+        </div>
+
+        <div className="chart-container">
+          <h3>Total Votes vs Possible Votes</h3>
+          <div className="chart">
+            <Chart
+              width={"100%"}
+              height={"300px"}
+              chartType="PieChart"
+              loader={<div>Loading Chart...</div>}
+              data={[
+                ["Type", "Votes"],
+                ["Person Voted", personVoted],
+                ["Person not voted", totalVotes - personVoted],
+              ]}
+              // options={{
+              //   title: "Total Votes vs Possible Votes",
+              // }}
+              rootProps={{ "data-testid": "2" }}
+            />
+          </div>
+            <div className="chart-description">
+            <h4>Number of people who voted: {personVoted}</h4>
+            <h4>Number of people who did not vote: {totalVotes - personVoted}</h4>
+            </div>
+        </div>
+      </div>
+      </div>
+      <div className="voting-box">
+      <h3>Dhanbad Election Results</h3>
+      <div className="results-container">
+        <div className="chart-container">
+          <h3>Election Results</h3>
+          <div className="chart">
+            <Chart
+              width={"100%"}
+              height={"300px"}
+              chartType="PieChart"
+              loader={<div>Loading Chart...</div>}
+              data={formatChartData(resultCandidate)}
+              // options={{
+              //   title: "Election Results",
+              // }}
+              rootProps={{ "data-testid": "1" }}
+            />
+          </div>
+          <div className="chart-description">
+            {resultCandidate.map((candidate, index) => (
+            <div key={index} className="candidate">
+              {/* <div className="candidate-index">{candidate.index}</div> */}
+              <div className="candidate-details">
+                <h4>{candidate.name}: {candidate.voteCount}</h4>
+              </div>
+            </div>
+          ))}
+          </div>
+        </div>
+
+        <div className="chart-container">
+          <h3>Total Votes vs Possible Votes</h3>
+          <div className="chart">
+            <Chart
+              width={"100%"}
+              height={"300px"}
+              chartType="PieChart"
+              loader={<div>Loading Chart...</div>}
+              data={[
+                ["Type", "Votes"],
+                ["Person Voted", personVoted],
+                ["Person not voted", totalVotes - personVoted],
+              ]}
+              // options={{
+              //   title: "Total Votes vs Possible Votes",
+              // }}
+              rootProps={{ "data-testid": "2" }}
+            />
+          </div>
+            <div className="chart-description">
+            <h4>Number of people who voted: {personVoted}</h4>
+            <h4>Number of people who did not vote: {totalVotes - personVoted}</h4>
+            </div>
+        </div>
+      </div>
+      </div>
+    </div>
+  )}
 
 { showChangePassword && (
   <div className="change-password-form">
@@ -501,40 +649,42 @@ const handleChangePassword = async () => {
 
       {candidateData.length > 0 ? (
         <div className="candidate-list">
-          <h2>Candidate List</h2>
-          <ul>
-            {candidateData.map((candidate, index) => (
+        <h2>Candidate List</h2>
+        <ul>
+          {candidateData.length > 0 ? (
+            candidateData.map((candidate, index) => (
               <li key={index}>
-                <div>
-                  <div>
-                    <h2>Candidate's Information</h2>
-                    <p>Name: {candidate.name}</p>
-                    <p>Party Name: {candidate.partyname}</p>
-                    <p>Slogan: {candidate.slogan}</p>
-                    <p>Aadhar Number: {candidate.aadharNumber}</p>
-                    <p>Date of Birth: {new Date(candidate.dateOfBirth).toLocaleDateString()}</p>
-                    <p>Address: {candidate.address}</p>
-                    <p>District: {candidate.district}</p>
-                    <p>Constituency: {candidate.constituency}</p>
-                    <p>Pincode: {candidate.pincode}</p>
-                    {/* Assuming verified is a property in candidate data */}
-                    <p>Verified: {candidate.verified ? 'True' : 'False'}</p>
-                    {/* Assuming you have a function to toggle verification status */}
-                    {candidate.verified === false && (<button onClick={() => toggleVerificationCad(candidate)}>Verify</button>)}
-                    <br />
-                    <img src={candidate.file} alt="Candidate ID" height={150} width={200}/>
-                    {/* <img src={candidate.aadharimg} alt="Candidate ID" /> */}
-                    <img
-      src={candidate.aadharimg}
-      alt="Aadhar Card"
-      style={{ maxWidth: "200px", height: "auto", marginTop: "10px" }}
-    />
-                  </div>
+                <div className="candidate-info">
+                  <h2>Candidate's Information</h2>
+                  <p>Name: {candidate.name}</p>
+                  <p>Party Name: {candidate.partyname}</p>
+                  <p>Slogan: {candidate.slogan}</p>
+                  <p>Aadhar Number: {candidate.aadharNumber}</p>
+                  <p>Date of Birth: {new Date(candidate.dateOfBirth).toLocaleDateString()}</p>
+                  <p>Address: {candidate.address}</p>
+                  <p>District: {candidate.district}</p>
+                  <p>Constituency: {candidate.constituency}</p>
+                  <p>Pincode: {candidate.pincode}</p>
+                  {/* Assuming verified is a property in candidate data */}
+                  <p>Verified: {candidate.verified ? 'True' : 'False'}</p>
+                  {/* Assuming you have a function to toggle verification status */}
+                  {candidate.verified === false && (
+                    <button onClick={() => toggleVerificationCad(candidate)}>Verify</button>
+                  )}
+                </div>
+                <div className="image-container">
+                  <img src={candidate.file} alt="Candidate ID" />
+                  <img src={candidate.aadharimg} alt="Aadhar Card" />
                 </div>
               </li>
-            ))}
-          </ul>
-        </div>
+            ))
+          ) : (
+            <div>
+              <h1>No candidates to verify.</h1>
+            </div>
+          )}
+        </ul>
+      </div>      
       ): (candidate && (
         <div>
           <h1>No candidates to verify.</h1>
@@ -543,39 +693,36 @@ const handleChangePassword = async () => {
 
 {voterData.length > 0 ? (
         <div className="voter-list">
-          <h2>Voter List</h2>
-          <ul>
-            {voterData.map((voter, index) => (
-              <li key={index}>
-                <div>
-                  <div>
-                    <h2>Voter's Information</h2>
-                    <p>Name: {voter.name}</p>
-                    <p>Aadhar Number: {voter.aadharNumber}</p>
-                    <p>Date of Birth: {new Date(voter.dateOfBirth).toLocaleDateString()}</p>
-                    <p>Address: {voter.address}</p>
-                    <p>District: {voter.district}</p>
-                    <p>Constituency: {voter.constituency}</p>
-                    <p>Pincode: {voter.pincode}</p>
-                    {/* Assuming verified is a property in candidate data */}
-                    <p>Verified: {voter.verified ? 'True' : 'False'}</p>
-                    {/* Assuming you have a function to toggle verification status */}
-                    <button onClick={() => toggleVerificationVot(voter)}>Verify</button>
-                    <br />
-                    <img  src={voter.file} alt="Candidate ID" height={150} width={200} />
-                    {/* <img  src={voter.aadharimg} alt="Candidate ID" /> */}
-                    <img
-                        src={voter.aadharimg}
-                        alt="Candidate ID"
-                        style={{ maxWidth: "200px", height: "auto", marginTop: "10px" }}
-                      />
-
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <h2>Voter List</h2>
+        <ul>
+          {voterData.map((voter, index) => (
+            <li key={index}>
+              <div className="voter-info">
+                <h2>Voter's Information</h2>
+                <p>Name: {voter.name}</p>
+                <p>Aadhar Number: {voter.aadharNumber}</p>
+                <p>Date of Birth: {new Date(voter.dateOfBirth).toLocaleDateString()}</p>
+                <p>Address: {voter.address}</p>
+                <p>District: {voter.district}</p>
+                <p>Constituency: {voter.constituency}</p>
+                <p>Pincode: {voter.pincode}</p>
+                {/* Assuming verified is a property in candidate data */}
+                <p>Verified: {voter.verified ? 'True' : 'False'}</p>
+                {/* Assuming you have a function to toggle verification status */}
+                <button onClick={() => toggleVerificationVot(voter)}>Verify</button>
+              </div>
+              <div className="image-container">
+                <img src={voter.file} alt="Candidate ID" height={150} width={200} />
+                <img
+                  src={voter.aadharimg}
+                  alt="Aadhar Card"
+                  style={{ maxWidth: "200px", height: "auto", marginTop: "10px" }}
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>      
       ):(voter &&(
         <div>
           <h1>No Voters to verify</h1>

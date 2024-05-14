@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./VoterDashboard.scss"; // Import your SCSS file for styling
 import newRequest from "../../utils/newRequest";
 import { useNavigate } from "react-router-dom";
+import Chart from "react-google-charts";
 import {ethers} from 'ethers';
 import { contractAbi, contractAddress } from "../../../../server/constants/constant";
 
@@ -14,6 +15,7 @@ function VoterDashboard() {
   const [castVote, setCastVote] = useState(false);
   const [currentUser, setCurrentUser] = useState({});
   const [candidates, setCandidates] = useState([]);
+  const [voters, setVoters] = useState([]);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -29,6 +31,9 @@ function VoterDashboard() {
   const [number, setNumber] = useState('');
   const [CanVote, setCanVote] = useState(true);
  
+  const [totalVotes, setTotalVotes] = useState();
+  const [personVoted, setPersonVoted] = useState();
+
   useEffect( () => {
     getCandidate();
     getRemainingTime();
@@ -45,6 +50,32 @@ function VoterDashboard() {
     }
   });
 
+  // const calculateTotalVotes = () => {
+  //   // Calculate total votes from candidates
+  //   const totalCandidateVotes = candidate.reduce((total, candidate) => total + candidate.voteCount, 0);
+
+  //   // Calculate total possible votes from voters in the same constituency
+  //   const totalPossibleVotes = voters.reduce((total, voter) => {
+  //     if (voter.constituency === currentUser.constituency) {
+  //       return total + 1; // Counting each voter as one vote
+  //     }
+  //     return total;
+  //   }, 0);
+
+  //   return { totalCandidateVotes, totalPossibleVotes };
+  // };
+  const formatChartData = (electionResults) => {
+    // Example format: [["Constituency", "Votes"], ["Constituency 1", 100], ["Constituency 2", 200], ...]
+    const chartData = electionResults.map((result) => [
+      result.name,
+      result.voteCount,
+    ]);
+    // const chartData = [["Candidate A", 20], ["Candidate B", 10], ["Candidate C", 13], ["Candidate D", 15]]
+    // // Add header row
+    chartData.unshift(["Candidates", "Votes"]);
+    return chartData;
+  };
+  
   async function handleNumberChange(e) {
     setNumber(e.target.value);
   }
@@ -195,6 +226,8 @@ const connectWallet = async () => {
 
   useEffect(() => {
     // Retrieve data from localStorage
+    fetchCandidates();
+    fetchVoters();
     const storedData = localStorage.getItem("currentUser");
     if (storedData) {
       const parsedData = JSON.parse(storedData);
@@ -203,7 +236,6 @@ const connectWallet = async () => {
     }
   
     // Fetch candidate data
-    fetchCandidates();
   }, []);
   
   const fetchCandidates = async () => {
@@ -216,6 +248,22 @@ const connectWallet = async () => {
       setCandidates(filteredCandidates);
     } catch (error) {
       console.error("Error fetching candidates:", error);
+      // Handle the error gracefully, e.g., display an error message to the user
+    }
+  };
+
+  const fetchVoters = async () => {
+    try {
+      const response = await newRequest.get("voter/auth/voters");
+      const voterData = response.data.voters;
+      const filteredVoters = voterData.filter(voters => voters.constituency === currentUser.constituency && voters.verified == true);
+      const cnt = candidate.reduce((total, candidate) => total + candidate.voteCount, 0);
+      console.log("Voters data:", filteredVoters);
+      setVoters(filteredVoters);
+      setTotalVotes(filteredVoters.length);
+      setPersonVoted(cnt);
+    } catch (error) {
+      console.error("Error fetching voters:", error);
       // Handle the error gracefully, e.g., display an error message to the user
     }
   };
@@ -279,7 +327,7 @@ const connectWallet = async () => {
         <button onClick={handleViewCandidateDetails}>View Candidate Details</button>
         <button onClick={handleCastVote}>Cast Vote</button>
         <button onClick={handleChangePwd}>Change Password</button>
-        <button onClick={handleViewVotingHistory}>View Voting History</button>
+        <button onClick={handleViewVotingHistory}>Results</button>
         <button onClick={handleLogout}>Logout</button>
       </div>
 
@@ -377,52 +425,37 @@ const connectWallet = async () => {
           {/* Display voter details here */}
 
           { CanVote ? (
-            <p className="connected-account">You have already voted.</p>
+            <p className="connected-account" style={{ fontSize: '30px', color: 'darkred',  }}>You have already voted.</p>
           ) : (
+          <div>
           <div>
             <input type="number" placeholder="Enter Candidate Index" value={number} onChange={handleNumberChange}></input>
             <br />
             <button className="login-button" onClick={vote}>Vote</button>
           </div>
+          <div className="candidates-table-container">
+          <table id="myTable" className="candidates-table">
+              <thead>
+                  <tr>
+                      <th>Index</th>
+                      <th>Candidate name</th>
+                      <th>Candidate votes</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  {candidate.map((candidate, index) => (
+                  <tr key={index}>
+                      <td>{candidate.index}</td>
+                      <td>{candidate.name}</td>
+                      <td>{candidate.voteCount}</td>
+                  </tr>
+                  ))}
+              </tbody>
+          </table>
+      </div>
+      </div>
+          
           )}
-
-
-        <div className="candidates-table-container">
-            <table id="myTable" className="candidates-table">
-                <thead>
-                    <tr>
-                        <th>Index</th>
-                        <th>Candidate name</th>
-                        <th>Candidate votes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {candidate.map((candidate, index) => (
-                    <tr key={index}>
-                        <td>{candidate.index}</td>
-                        <td>{candidate.name}</td>
-                        <td>{candidate.voteCount}</td>
-                    </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-
-
-          {candidates.map(candidate => (
-            <div key={candidate._id} className="candidate-container">
-              <div className="candidate-image">
-                <img src={candidate.file} alt="Candidate Image" />
-              </div>
-              <div className="candidate-details">
-                <h3>{candidate.name}</h3>
-                <p>Party Name: {candidate.partyname}</p>
-                <p>Slogan: {candidate.slogan}</p>
-                {/* <button className="vote-button" onClick={() => vote(currentUser)}>Vote</button> */}
-                {/* Render additional candidate details as needed */}
-              </div>
-            </div>
-          ))}
         </div>
       )}
 
@@ -445,8 +478,59 @@ const connectWallet = async () => {
 
       {viewVotingHistory && (
         <div className="voting-history">
-          <h2>Voting History</h2>
-          {/* Display voting history here */}
+          <div className="results-container">
+            <div className="chart-container">
+              <h2>Election Results</h2>
+              <div className="chart">
+                <Chart
+                  width={"100%"}
+                  height={"300px"}
+                  chartType="PieChart"
+                  loader={<div>Loading Chart...</div>}
+                  data={formatChartData(candidate)}
+                  // options={{
+                  //   title: "Election Results",
+                  // }}
+                  rootProps={{ "data-testid": "1" }}
+                />
+              </div>
+              <div className="chart-description">
+                {candidate.map((candidate, index) => (
+                <div key={index} className="candidate">
+                  {/* <div className="candidate-index">{candidate.index}</div> */}
+                  <div className="candidate-details">
+                    <h4>{candidate.name}: {candidate.voteCount}</h4>
+                  </div>
+                </div>
+              ))}
+              </div>
+            </div>
+
+            <div className="chart-container">
+              <h2>Total Votes vs Possible Votes</h2>
+              <div className="chart">
+                <Chart
+                  width={"100%"}
+                  height={"300px"}
+                  chartType="PieChart"
+                  loader={<div>Loading Chart...</div>}
+                  data={[
+                    ["Type", "Votes"],
+                    ["Person Voted", personVoted],
+                    ["Person not voted", totalVotes - personVoted],
+                  ]}
+                  // options={{
+                  //   title: "Total Votes vs Possible Votes",
+                  // }}
+                  rootProps={{ "data-testid": "2" }}
+                />
+              </div>
+                <div className="chart-description">
+                <h4>Number of people who voted: {personVoted}</h4>
+                <h4>Number of people who did not vote: {totalVotes - personVoted}</h4>
+                </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

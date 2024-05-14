@@ -5,8 +5,8 @@ function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-logo">
-        <img src="./img/logo.png" alt="" />
-        Voting System
+      <Link to = '/'><img src="./img/img.jpg" alt="" /></Link>
+        <span className="logo-text">Decentralized Voting System</span>
       </div>
       <div className="navbar-links">
         <Link to='/'>Home</Link>

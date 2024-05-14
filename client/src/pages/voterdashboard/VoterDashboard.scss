@@ -82,11 +82,13 @@
 
     .voter-list {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
+      padding: 20px;
     }
     
     .voter-image {
-      margin-right: 20px;
+      margin-right: 40px;
+      margin-left: 100px;
     }
     
     .voter-image img {
@@ -94,7 +96,7 @@
       width: 300px;
       border-radius: 8px; // Update border radius if necessary
       object-fit: cover;
-      margin-left: 150px;
+      margin-left: 300px;
     }
     
     .voter-details {
@@ -124,6 +126,44 @@
     .voting-history {
       margin-top: 20px;
     }
+
+    .results-container {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+    
+      .chart-container {
+        width: 48%; // Adjust the width as needed
+        margin-bottom: 20px;
+    
+        // Add 3D effect
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    
+        &:hover {
+          transform: translateY(-5px);
+        }
+    
+        // Style for the chart heading
+        h2 {
+          padding: 10px;
+          background-color: #f0f0f0;
+          border-top-left-radius: 10px;
+          border-top-right-radius: 10px;
+        }
+    
+        // Style for the chart itself
+        .chart {
+          padding: 20px;
+          background-color: #fff;
+          border-bottom-left-radius: 10px;
+          border-bottom-right-radius: 10px;
+        }
+      }
+    }
+    
   }
 
   .cast-vote {
