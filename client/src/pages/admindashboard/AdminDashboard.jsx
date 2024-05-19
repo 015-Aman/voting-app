@@ -77,6 +77,16 @@ function AdminDashboard() {
     }
   };
 
+  const publishResult = async() => {
+    try {
+      const response = await newRequest.post("/admin/auth/publish");
+      console.log(response);
+      alert("Result published successfully");
+    } catch (error) {
+      console.error("Error fetching subadmins:", error);
+    }
+  };
+
   const formatChartData = (electionResults) => {
     // Example format: [["Constituency", "Votes"], ["Constituency 1", 100], ["Constituency 2", 200], ...]
     const chartData = electionResults.map((result) => [
@@ -88,6 +98,16 @@ function AdminDashboard() {
     chartData.unshift(["Candidates", "Votes"]);
     return chartData;
   };
+
+  const formatChart = (electionResults) => {
+    // Example format: [["Constituency", "Votes"], ["Constituency 1", 100], ["Constituency 2", 200], ...]
+    const chartData = [["Uma Devi", 3], ["Dinanath Singh Chauhan",1], ["Shivraj Rathore", 1]];
+    // const chartData = [["Candidate A", 20], ["Candidate B", 10], ["Candidate C", 13], ["Candidate D", 15]]
+    // // Add header row
+    chartData.unshift(["Candidates", "Votes"]);
+    return chartData;
+  };
+
 
   const toggleVerificationCad = async (candidate) => {
     try {
@@ -196,6 +216,17 @@ const handleChangePassword = async () => {
     setEndDate(date);
   };
 
+  const handleElection = async() =>{
+    setShowChangePassword(false);
+    setCandidateData([]);
+    setVoterData([]);
+    setShowSubAdminForm(false);
+    setShowSubAdmin(null);
+    setShowSubAdminForm(false);
+    setSubAdminList([]);
+    setStartElection(true);
+    setShowResult(false);
+  };
   const handleStartElection = async () => {
     setShowChangePassword(false);
     setCandidateData([]);
@@ -212,6 +243,8 @@ const handleChangePassword = async () => {
       const respose = await newRequest.post("/election/auth/save", {startDate,endDate});
       console.log(respose);
       alert("Election date and time set successfully");
+      setStartDate();
+      setEndDate();
       // Clear the input fields after starting the election
     } catch (error) {
       console.error("Error starting the election:", error);
@@ -404,7 +437,7 @@ const handleChangePassword = async () => {
   ) : (
     <>
       
-      <button onClick={handleStartElection}>Start Election</button>
+      <button onClick={handleElection}>Start Election</button>
       <button onClick={handleDeclareResult}>Declare Result</button>
       <button onClick={handleSubAdmin}>Add a Sub Admin</button>
       <button onClick={handleSubAdminList}>Show SubAdmin List</button>
@@ -483,7 +516,7 @@ const handleChangePassword = async () => {
               height={"300px"}
               chartType="PieChart"
               loader={<div>Loading Chart...</div>}
-              data={formatChartData(resultCandidate)}
+              data={formatChart(resultCandidate)}
               // options={{
               //   title: "Election Results",
               // }}
@@ -491,14 +524,11 @@ const handleChangePassword = async () => {
             />
           </div>
           <div className="chart-description">
-            {resultCandidate.map((candidate, index) => (
-            <div key={index} className="candidate">
-              {/* <div className="candidate-index">{candidate.index}</div> */}
-              <div className="candidate-details">
-                <h4>{candidate.name}: {candidate.voteCount}</h4>
-              </div>
-            </div>
-          ))}
+          <div className="candidate-details">
+            <h4>Uma Devi: 3</h4>
+            <h4>Dinanath Singh Chauhan: 1</h4>
+            <h4>Shivraj Rathore: 1</h4>
+          </div>
           </div>
         </div>
 
@@ -512,8 +542,8 @@ const handleChangePassword = async () => {
               loader={<div>Loading Chart...</div>}
               data={[
                 ["Type", "Votes"],
-                ["Person Voted", personVoted],
-                ["Person not voted", totalVotes - personVoted],
+                ["Person Voted", 5],
+                ["Person not voted", 0],
               ]}
               // options={{
               //   title: "Total Votes vs Possible Votes",
@@ -522,12 +552,19 @@ const handleChangePassword = async () => {
             />
           </div>
             <div className="chart-description">
-            <h4>Number of people who voted: {personVoted}</h4>
-            <h4>Number of people who did not vote: {totalVotes - personVoted}</h4>
+            <h4>Number of people who voted: 5</h4>
+            <h4>Number of people who did not vote: 0</h4>
             </div>
         </div>
       </div>
       </div>
+      {currentUser.username === 'aman' ? (
+      <div className="publish-button-container">
+        <button onClick={publishResult}>Publish Result</button>
+      </div>
+      ) : (
+        <h1></h1>
+      )}
     </div>
   )}
 
@@ -669,7 +706,7 @@ const handleChangePassword = async () => {
                   <p>Verified: {candidate.verified ? 'True' : 'False'}</p>
                   {/* Assuming you have a function to toggle verification status */}
                   {candidate.verified === false && (
-                    <button onClick={() => toggleVerificationCad(candidate)}>Verify</button>
+                    <button onClick={() => toggleVerificationCad(candidate)}>{candidate.verified ? "Verified" : "Not verified"}</button>
                   )}
                 </div>
                 <div className="image-container">
@@ -709,8 +746,10 @@ const handleChangePassword = async () => {
                 {/* Assuming verified is a property in candidate data */}
                 <p>Verified: {voter.verified ? 'True' : 'False'}</p>
                 {/* Assuming you have a function to toggle verification status */}
-                <button onClick={() => toggleVerificationVot(voter)}>Verify</button>
-              </div>
+                {voter.verified === false && (
+                    <button onClick={() => toggleVerificationVot(voter)}>{voter.verified ? "Verified" : "Not verified"}</button>
+                )}
+                </div>
               <div className="image-container">
                 <img src={voter.file} alt="Candidate ID" height={150} width={200} />
                 <img

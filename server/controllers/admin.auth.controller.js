@@ -6,6 +6,8 @@ const Voter = require("../models/voter.model.js");
 const createError = require("../utils/createError.js");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const Election = require("../models/election.model.js");
+
 
 const loginAdmin = async (req, res, next) => {
   try {
@@ -160,6 +162,26 @@ const verifyCandidate = async(req,res) =>{
   }
   
 }
+
+
+const publishResult = async(req,res,next) => {
+    try {
+      const latestElection = await Election.findOne({}, {}, { sort: { 'updatedAt': -1 } });
+      console.log(latestElection);
+      if (latestElection) {
+          await Election.updateOne({ _id: latestElection._id }, { $set: { published: true } });
+          console.log("Latest election record updated successfully.");
+      } else {
+          console.log("No election records found.");
+      }
+      res.status(201).send(latestElection);
+
+
+    } catch (error) {
+      console.log("Error publishing result");
+      res.status(404).send("Something wrong happend in publising result ");
+    }
+}
   module.exports = {
-    logoutAdmin, registerSubAdmin, loginAdmin, fetchSubAdmin, verifyVoter, changePassword, verifyCandidate
+    logoutAdmin, registerSubAdmin, loginAdmin, fetchSubAdmin, verifyVoter, changePassword, verifyCandidate, publishResult
   };

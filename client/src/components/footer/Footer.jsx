@@ -8,8 +8,8 @@ function Footer() {
         <div className="footer-content">
           <div className="footer-section">
             <h3>Contact Us</h3>
-            <p>Email: info@votingsystem.com</p>
-            <p>Address: 123 Main Street, City, Country</p>
+            <p>Email: amansingh@gmail.com</p>
+            <p>Address: Emerald hostel, NIT Trichy, Tamil Nadu, India</p>
           </div>
           <div className="footer-section">
             <h3>Feedback</h3>

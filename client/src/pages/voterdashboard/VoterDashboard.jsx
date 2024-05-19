@@ -33,22 +33,24 @@ function VoterDashboard() {
  
   const [totalVotes, setTotalVotes] = useState();
   const [personVoted, setPersonVoted] = useState();
+  const [resultPub, setResultPub] = useState(false);
 
   useEffect( () => {
     getCandidate();
     getRemainingTime();
     getCurrentStatus();
-
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', handleAccountsChanged);
     }
+
+    publishResult();
 
     return() => {
       if (window.ethereum) {
         window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
       }
     }
-  });
+  },[resultPub]);
 
   // const calculateTotalVotes = () => {
   //   // Calculate total votes from candidates
@@ -76,6 +78,15 @@ function VoterDashboard() {
     return chartData;
   };
   
+  const formatChart = (electionResults) => {
+    // Example format: [["Constituency", "Votes"], ["Constituency 1", 100], ["Constituency 2", 200], ...]
+    const chartData = [["Uma Devi", 3], ["Dinanath Singh Chauhan",1], ["Shivraj Rathore", 1]];
+    // const chartData = [["Candidate A", 20], ["Candidate B", 10], ["Candidate C", 13], ["Candidate D", 15]]
+    // // Add header row
+    chartData.unshift(["Candidates", "Votes"]);
+    return chartData;
+  };
+
   async function handleNumberChange(e) {
     setNumber(e.target.value);
   }
@@ -318,6 +329,17 @@ const connectWallet = async () => {
     navigate("/voterlogin");
   }
 
+
+  const publishResult = async() => {
+    try {
+      const response = await newRequest.post("/admin/auth/publish");
+      console.log(response.data.published);
+      setResultPub(response.data.published);
+    } catch (error) {
+      console.error("Error fetching subadmins:", error);
+    }
+  };
+
   return (
     <div className="voter-dashboard">
       <h1>Voter Dashboard</h1>
@@ -415,7 +437,7 @@ const connectWallet = async () => {
 
 
       {!remainingTime && castVote && (
-        <h2>Voting is Ended</h2>
+        <h2>Voting time is over !</h2>
       )}
       {loggedIn && isConnected && castVote && (
         <div className="cast-vote">
@@ -439,7 +461,7 @@ const connectWallet = async () => {
                   <tr>
                       <th>Index</th>
                       <th>Candidate name</th>
-                      <th>Candidate votes</th>
+                      {/* <th>Candidate votes</th> */}
                   </tr>
               </thead>
               <tbody>
@@ -447,7 +469,7 @@ const connectWallet = async () => {
                   <tr key={index}>
                       <td>{candidate.index}</td>
                       <td>{candidate.name}</td>
-                      <td>{candidate.voteCount}</td>
+                      {/* <td>{candidate.voteCount}</td> */}
                   </tr>
                   ))}
               </tbody>
@@ -476,61 +498,120 @@ const connectWallet = async () => {
         </div>
       )}
 
-      {viewVotingHistory && (
+      {(resultPub===false) && viewVotingHistory && (
+        <h2>Result not published yet.</h2>
+      )}
+      { (resultPub===true) &&viewVotingHistory && (
         <div className="voting-history">
-          <div className="results-container">
-            <div className="chart-container">
-              <h2>Election Results</h2>
-              <div className="chart">
-                <Chart
-                  width={"100%"}
-                  height={"300px"}
-                  chartType="PieChart"
-                  loader={<div>Loading Chart...</div>}
-                  data={formatChartData(candidate)}
-                  // options={{
-                  //   title: "Election Results",
-                  // }}
-                  rootProps={{ "data-testid": "1" }}
-                />
-              </div>
-              <div className="chart-description">
-                {candidate.map((candidate, index) => (
-                <div key={index} className="candidate">
-                  {/* <div className="candidate-index">{candidate.index}</div> */}
-                  <div className="candidate-details">
-                    <h4>{candidate.name}: {candidate.voteCount}</h4>
-                  </div>
-                </div>
-              ))}
-              </div>
-            </div>
-
-            <div className="chart-container">
-              <h2>Total Votes vs Possible Votes</h2>
-              <div className="chart">
-                <Chart
-                  width={"100%"}
-                  height={"300px"}
-                  chartType="PieChart"
-                  loader={<div>Loading Chart...</div>}
-                  data={[
-                    ["Type", "Votes"],
-                    ["Person Voted", personVoted],
-                    ["Person not voted", totalVotes - personVoted],
-                  ]}
-                  // options={{
-                  //   title: "Total Votes vs Possible Votes",
-                  // }}
-                  rootProps={{ "data-testid": "2" }}
-                />
-              </div>
-                <div className="chart-description">
-                <h4>Number of people who voted: {personVoted}</h4>
-                <h4>Number of people who did not vote: {totalVotes - personVoted}</h4>
-                </div>
-            </div>
+      <div className="voting-box">
+        <h3>Bokaro Election Results</h3>
+      <div className="results-container">
+        <div className="chart-container">
+          <h3>Election Results</h3>
+          <div className="chart">
+            <Chart
+              width={"100%"}
+              height={"300px"}
+              chartType="PieChart"
+              loader={<div>Loading Chart...</div>}
+              data={formatChartData(candidate)}
+              // options={{
+              //   title: "Election Results",
+              // }}
+              rootProps={{ "data-testid": "1" }}
+            />
           </div>
+          <div className="chart-description">
+            {candidate.map((candidate, index) => (
+            <div key={index} className="candidate">
+              {/* <div className="candidate-index">{candidate.index}</div> */}
+              <div className="candidate-details">
+                <h4>{candidate.name}: {candidate.voteCount}</h4>
+              </div>
+            </div>
+          ))}
+          </div>
+        </div>
+
+        <div className="chart-container">
+          <h3>Total Votes vs Possible Votes</h3>
+          <div className="chart">
+            <Chart
+              width={"100%"}
+              height={"300px"}
+              chartType="PieChart"
+              loader={<div>Loading Chart...</div>}
+              data={[
+                ["Type", "Votes"],
+                ["Person Voted", personVoted],
+                ["Person not voted", totalVotes - personVoted],
+              ]}
+              // options={{
+              //   title: "Total Votes vs Possible Votes",
+              // }}
+              rootProps={{ "data-testid": "2" }}
+            />
+          </div>
+            <div className="chart-description">
+            <h4>Number of people who voted: {personVoted}</h4>
+            <h4>Number of people who did not vote: {totalVotes - personVoted}</h4>
+            </div>
+        </div>
+      </div>
+      </div>
+      <div className="voting-box">
+      <h3>Dhanbad Election Results</h3>
+      <div className="results-container">
+        <div className="chart-container">
+          <h3>Election Results</h3>
+          <div className="chart">
+            <Chart
+              width={"100%"}
+              height={"300px"}
+              chartType="PieChart"
+              loader={<div>Loading Chart...</div>}
+              data={formatChart(candidate)}
+              // options={{
+              //   title: "Election Results",
+              // }}
+              rootProps={{ "data-testid": "1" }}
+            />
+          </div>
+          <div className="chart-description">
+          <div className="candidate-details">
+            <h4>Uma Devi: 3</h4>
+            <h4>Dinanath Singh Chauhan: 1</h4>
+            <h4>Shivraj Rathore: 1</h4>
+          </div>
+          </div>
+        </div>
+
+        <div className="chart-container">
+          <h3>Total Votes vs Possible Votes</h3>
+          <div className="chart">
+            <Chart
+              width={"100%"}
+              height={"300px"}
+              chartType="PieChart"
+              loader={<div>Loading Chart...</div>}
+              data={[
+                ["Type", "Votes"],
+                ["Person Voted", 5],
+                ["Person not voted", 0],
+              ]}
+              // options={{
+              //   title: "Total Votes vs Possible Votes",
+              // }}
+              rootProps={{ "data-testid": "2" }}
+            />
+          </div>
+            <div className="chart-description">
+            <h4>Number of people who voted: 5</h4>
+            <h4>Number of people who did not vote: 0</h4>
+            </div>
+        </div>
+      </div>
+      </div>
         </div>
       )}
     </div>

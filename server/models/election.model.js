@@ -18,7 +18,14 @@ const electionSchema = new Schema({
     endTime: {
         type: String,
         required: true
-    }
+    },
+    published: {
+        type: Boolean,
+        default: false
+    },// Automatically add createdAt and updatedAt fields
+},
+{
+    timestamps: true
 });
 
 module.exports = mongoose.model("Election", electionSchema);
